@@ -2,14 +2,16 @@ package com.mikepenz.fastadapter.items;
 
 import android.content.Context;
 import android.support.annotation.CallSuper;
+import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
-import com.mikepenz.fastadapter.FastAdapter;
 import com.mikepenz.fastadapter.IClickable;
 import com.mikepenz.fastadapter.IItem;
+import com.mikepenz.fastadapter.listeners.OnClickListener;
 
 import java.util.Collections;
 import java.util.List;
@@ -19,6 +21,7 @@ import java.util.List;
  * Implements the general methods of the IItem interface to speed up development.
  */
 public abstract class AbstractItem<Item extends IItem & IClickable, VH extends RecyclerView.ViewHolder> implements IItem<Item, VH>, IClickable<Item> {
+
     // the identifier for this item
     protected long mIdentifier = -1;
 
@@ -132,7 +135,7 @@ public abstract class AbstractItem<Item extends IItem & IClickable, VH extends R
     }
 
     //this listener is called before any processing is done within the fastAdapter (comes before the FastAdapter item pre click listener)
-    protected FastAdapter.OnClickListener<Item> mOnItemPreClickListener;
+    protected OnClickListener<Item> mOnItemPreClickListener;
 
     /**
      * provide a listener which is called before any processing is done within the adapter
@@ -142,7 +145,7 @@ public abstract class AbstractItem<Item extends IItem & IClickable, VH extends R
      * @return this
      */
     @Override
-    public Item withOnItemPreClickListener(FastAdapter.OnClickListener<Item> onItemPreClickListener) {
+    public Item withOnItemPreClickListener(OnClickListener<Item> onItemPreClickListener) {
         mOnItemPreClickListener = onItemPreClickListener;
         return (Item) this;
     }
@@ -150,12 +153,12 @@ public abstract class AbstractItem<Item extends IItem & IClickable, VH extends R
     /**
      * @return the on PRE item click listener
      */
-    public FastAdapter.OnClickListener<Item> getOnPreItemClickListener() {
+    public OnClickListener<Item> getOnPreItemClickListener() {
         return mOnItemPreClickListener;
     }
 
     //listener called after the operations were done on click (comes before the FastAdapter item click listener)
-    protected FastAdapter.OnClickListener<Item> mOnItemClickListener;
+    protected OnClickListener<Item> mOnItemClickListener;
 
     /**
      * provide a listener which is called before the click listener is called within the adapter
@@ -165,7 +168,7 @@ public abstract class AbstractItem<Item extends IItem & IClickable, VH extends R
      * @return this
      */
     @Override
-    public Item withOnItemClickListener(FastAdapter.OnClickListener<Item> onItemClickListener) {
+    public Item withOnItemClickListener(OnClickListener<Item> onItemClickListener) {
         mOnItemClickListener = onItemClickListener;
         return (Item) this;
     }
@@ -173,7 +176,7 @@ public abstract class AbstractItem<Item extends IItem & IClickable, VH extends R
     /**
      * @return the OnItemClickListener
      */
-    public FastAdapter.OnClickListener<Item> getOnItemClickListener() {
+    public OnClickListener<Item> getOnItemClickListener() {
         return mOnItemClickListener;
     }
 
@@ -188,8 +191,6 @@ public abstract class AbstractItem<Item extends IItem & IClickable, VH extends R
     public void bindView(final VH holder, List<Object> payloads) {
         //set the selected state of this item. force this otherwise it may is missed when implementing an item
         holder.itemView.setSelected(isSelected());
-        //set the tag of this item to this object (can be used when retrieving the view)
-        holder.itemView.setTag(this);
     }
 
     /**
@@ -223,6 +224,30 @@ public abstract class AbstractItem<Item extends IItem & IClickable, VH extends R
     }
 
     /**
+     * RecyclerView was not able to recycle that viewHolder because it's in a transient state
+     * Implement this and clear any animations, to allow recycling. Return true in that case
+     *
+     * @param holder
+     * @return true if you want it to get recycled
+     */
+    @Override
+    public boolean failedToRecycle(VH holder) {
+        return false;
+    }
+
+    /**
+     * this method is called by generateView(Context ctx), generateView(Context ctx, ViewGroup parent) and getViewHolder(ViewGroup parent)
+     * it will generate the View from the layout, overwrite this if you want to implement your view creation programatically
+     *
+     * @param ctx
+     * @param parent
+     * @return
+     */
+    public View createView(Context ctx, @Nullable ViewGroup parent) {
+        return LayoutInflater.from(ctx).inflate(getLayoutRes(), parent, false);
+    }
+
+    /**
      * generates a view by the defined LayoutRes
      *
      * @param ctx
@@ -230,7 +255,7 @@ public abstract class AbstractItem<Item extends IItem & IClickable, VH extends R
      */
     @Override
     public View generateView(Context ctx) {
-        VH viewHolder = getViewHolder(LayoutInflater.from(ctx).inflate(getLayoutRes(), null, false));
+        VH viewHolder = getViewHolder(createView(ctx, null));
 
         //as we already know the type of our ViewHolder cast it to our type
         bindView(viewHolder, Collections.EMPTY_LIST);
@@ -248,7 +273,7 @@ public abstract class AbstractItem<Item extends IItem & IClickable, VH extends R
      */
     @Override
     public View generateView(Context ctx, ViewGroup parent) {
-        VH viewHolder = getViewHolder(LayoutInflater.from(ctx).inflate(getLayoutRes(), parent, false));
+        VH viewHolder = getViewHolder(createView(ctx, parent));
 
         //as we already know the type of our ViewHolder cast it to our type
         bindView(viewHolder, Collections.EMPTY_LIST);
@@ -264,7 +289,7 @@ public abstract class AbstractItem<Item extends IItem & IClickable, VH extends R
      */
     @Override
     public VH getViewHolder(ViewGroup parent) {
-        return getViewHolder(LayoutInflater.from(parent.getContext()).inflate(getLayoutRes(), parent, false));
+        return getViewHolder(createView(parent.getContext(), parent));
     }
 
 
@@ -274,6 +299,7 @@ public abstract class AbstractItem<Item extends IItem & IClickable, VH extends R
      * @param v
      * @return the ViewHolder for this Item
      */
+    @NonNull
     public abstract VH getViewHolder(View v);
 
     /**
@@ -284,7 +310,7 @@ public abstract class AbstractItem<Item extends IItem & IClickable, VH extends R
      */
     @Override
     public boolean equals(int id) {
-        return id == mIdentifier;
+        return id == getIdentifier();
     }
 
     /**
@@ -298,7 +324,7 @@ public abstract class AbstractItem<Item extends IItem & IClickable, VH extends R
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         AbstractItem<?, ?> that = (AbstractItem<?, ?>) o;
-        return mIdentifier == that.mIdentifier;
+        return getIdentifier() == that.getIdentifier();
     }
 
     /**
@@ -308,6 +334,6 @@ public abstract class AbstractItem<Item extends IItem & IClickable, VH extends R
      */
     @Override
     public int hashCode() {
-        return Long.valueOf(mIdentifier).hashCode();
+        return Long.valueOf(getIdentifier()).hashCode();
     }
 }

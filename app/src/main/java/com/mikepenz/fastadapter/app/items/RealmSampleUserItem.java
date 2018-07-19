@@ -222,7 +222,6 @@ public class RealmSampleUserItem extends RealmObject implements IItem<RealmSampl
 
     /**
      * This method returns the ViewHolder for our item, using the provided View.
-     * By default it will try to get the ViewHolder from the ViewHolderFactory. If this one is not implemented it will go over the generic way, wasting ~5ms
      *
      * @param v
      * @return the ViewHolder for this Item
@@ -240,8 +239,6 @@ public class RealmSampleUserItem extends RealmObject implements IItem<RealmSampl
     public void bindView(ViewHolder holder, List<Object> payloads) {
         //set the selected state of this item. force this otherwise it may is missed when implementing an item
         holder.itemView.setSelected(isSelected());
-        //set the tag of this item to this object (can be used when retrieving the view)
-        holder.itemView.setTag(this);
 
         //set the name
         holder.name.setText(name);
@@ -257,6 +254,11 @@ public class RealmSampleUserItem extends RealmObject implements IItem<RealmSampl
 
     @Override
     public void detachFromWindow(ViewHolder holder) {}
+
+    @Override
+    public boolean failedToRecycle(ViewHolder holder) {
+        return false;
+    }
 
     /**
      * If this item equals to the given identifier

@@ -1,20 +1,26 @@
 package com.mikepenz.fastadapter;
 
+import android.content.Context;
+import android.support.annotation.Nullable;
 import android.support.v7.widget.RecyclerView;
 import android.view.View;
+import android.view.ViewGroup;
+import android.widget.FrameLayout;
 
 import com.mikepenz.fastadapter.items.AbstractItem;
 
-import java.util.List;
+import java.util.Objects;
 
 /**
  * Created by fabianterhorst on 29.03.16.
  */
-public class TestItem extends AbstractItem<TestItem, TestItem.ViewHolder> implements IExpandable<TestItem, TestItem>, ISubItem<TestItem, TestItem> {
+public class TestItem extends AbstractItem<TestItem, TestItem.ViewHolder> {
 
-    private List<TestItem> mSubItems;
-    private TestItem mParent;
-    private boolean mExpanded = false;
+    private String name;
+
+    public TestItem(String name) {
+        this.name = name;
+    }
 
     @Override
     public int getLayoutRes() {
@@ -27,40 +33,8 @@ public class TestItem extends AbstractItem<TestItem, TestItem.ViewHolder> implem
     }
 
     @Override
-    public boolean isExpanded() {
-        return mExpanded;
-    }
-
-    @Override
-    public TestItem withIsExpanded(boolean expanded) {
-        mExpanded = expanded;
-        return this;
-    }
-
-    @Override
-    public List<TestItem> getSubItems() {
-        return mSubItems;
-    }
-
-    @Override
-    public boolean isAutoExpanding() {
-        return true;
-    }
-
-    public TestItem withSubItems(List<TestItem> subItems) {
-        this.mSubItems = subItems;
-        return this;
-    }
-
-    @Override
-    public TestItem getParent() {
-        return mParent;
-    }
-
-    @Override
-    public TestItem withParent(TestItem parent) {
-        this.mParent = parent;
-        return this;
+    public View createView(final Context ctx, @Nullable final ViewGroup parent) {
+        return new FrameLayout(ctx);
     }
 
     @Override
@@ -72,5 +46,26 @@ public class TestItem extends AbstractItem<TestItem, TestItem.ViewHolder> implem
         public ViewHolder(View view) {
             super(view);
         }
+    }
+
+    @Override
+    public String toString() {
+        return "TestItem{" +
+                "name='" + name + '\'' +
+                '}';
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        if (!super.equals(o)) return false;
+        TestItem testItem = (TestItem) o;
+        return Objects.equals(name, testItem.name);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(super.hashCode(), name);
     }
 }

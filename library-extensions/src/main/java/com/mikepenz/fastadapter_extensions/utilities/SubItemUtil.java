@@ -1,6 +1,6 @@
 package com.mikepenz.fastadapter_extensions.utilities;
 
-import android.util.Log;
+import android.support.annotation.NonNull;
 
 import com.mikepenz.fastadapter.FastAdapter;
 import com.mikepenz.fastadapter.IAdapter;
@@ -8,11 +8,14 @@ import com.mikepenz.fastadapter.IExpandable;
 import com.mikepenz.fastadapter.IItem;
 import com.mikepenz.fastadapter.IItemAdapter;
 import com.mikepenz.fastadapter.ISubItem;
+import com.mikepenz.fastadapter.expandable.ExpandableExtension;
+import com.mikepenz.fastadapter.select.SelectExtension;
+import com.mikepenz.fastadapter.utils.AdapterPredicate;
+import com.mikepenz.fastadapter.utils.Triple;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.ListIterator;
@@ -28,7 +31,9 @@ public class SubItemUtil {
      *
      * @param adapter the adapter instance
      * @return a set of all selected items and subitems
+     * @deprecated See {@link FastAdapter#getSelectedItems()} ()} ()}
      */
+    @Deprecated
     public static Set<IItem> getSelectedItems(FastAdapter adapter) {
         Set<IItem> selections = new HashSet<>();
         int length = adapter.getItemCount();
@@ -103,7 +108,7 @@ public class SubItemUtil {
     /**
      * retrieves a flat list of the items in the provided list, respecting subitems regardless of there current visibility
      *
-     * @param items the list of items to process
+     * @param items        the list of items to process
      * @param countHeaders if true, headers will be counted as well
      * @return list of items in the adapter
      */
@@ -113,7 +118,7 @@ public class SubItemUtil {
 
     /**
      * internal function!
-     *
+     * <p>
      * Why countHeaders and subItems => because the subItemsOnly is an internal flag for the recursive call to optimise it!
      */
     private static List<IItem> getAllItems(List<IItem> items, boolean countHeaders, boolean subItemsOnly, IPredicate predicate) {
@@ -172,8 +177,12 @@ public class SubItemUtil {
      * @return number of selected items underneath the header
      */
     public static <T extends IItem & IExpandable> int countSelectedSubItems(final FastAdapter adapter, T header) {
-        Set<IItem> selections = getSelectedItems(adapter);
-        return countSelectedSubItems(selections, header);
+        SelectExtension extension = (SelectExtension) adapter.getExtension(SelectExtension.class);
+        if (extension != null) {
+            Set<IItem> selections = extension.getSelectedItems();
+            return countSelectedSubItems(selections, header);
+        }
+        return 0;
     }
 
     public static <T extends IItem & IExpandable> int countSelectedSubItems(Set<IItem> selections, T header) {
@@ -196,7 +205,7 @@ public class SubItemUtil {
      *
      * @param adapter the adapter instance
      * @param header  the header who's children should be selected or deselected
-     * @param select the new selected state of the sub items
+     * @param select  the new selected state of the sub items
      */
     public static <T extends IItem & IExpandable> void selectAllSubItems(final FastAdapter adapter, T header, boolean select) {
         selectAllSubItems(adapter, header, select, false, null);
@@ -205,22 +214,25 @@ public class SubItemUtil {
     /**
      * select or unselect all sub itmes underneath an expandable item
      *
-     * @param adapter the adapter instance
-     * @param header  the header who's children should be selected or deselected
-     * @param select the new selected state of the sub items
+     * @param adapter      the adapter instance
+     * @param header       the header who's children should be selected or deselected
+     * @param select       the new selected state of the sub items
      * @param notifyParent true, if the parent should be notified about the changes of its children selection state
-     * @param payload payload for the notifying function
+     * @param payload      payload for the notifying function
      */
     public static <T extends IItem & IExpandable> void selectAllSubItems(final FastAdapter adapter, T header, boolean select, boolean notifyParent, Object payload) {
         int subItems = header.getSubItems().size();
         int position = adapter.getPosition(header);
         if (header.isExpanded()) {
             for (int i = 0; i < subItems; i++) {
-                if (((IItem)header.getSubItems().get(i)).isSelectable()) {
-                    if (select) {
-                        adapter.select(position + i + 1);
-                    } else {
-                        adapter.deselect(position + i + 1);
+                if (((IItem) header.getSubItems().get(i)).isSelectable()) {
+                    SelectExtension extension = (SelectExtension) adapter.getExtension(SelectExtension.class);
+                    if (extension != null) {
+                        if (select) {
+                            extension.select(position + i + 1);
+                        } else {
+                            extension.deselect(position + i + 1);
+                        }
                     }
                 }
                 if (header.getSubItems().get(i) instanceof IExpandable)
@@ -229,7 +241,7 @@ public class SubItemUtil {
             }
         } else {
             for (int i = 0; i < subItems; i++) {
-                if (((IItem)header.getSubItems().get(i)).isSelectable()) {
+                if (((IItem) header.getSubItems().get(i)).isSelectable()) {
                     ((IItem) header.getSubItems().get(i)).withSetSelected(select);
                 }
                 if (header.getSubItems().get(i) instanceof IExpandable)
@@ -243,8 +255,68 @@ public class SubItemUtil {
         }
     }
 
-    private static <T extends IExpandable & IItem> T getParent(IItem item) {
+    /**
+     * select or unselect an item with the given identifier
+     * This will not handle the `only one selected` case. Please deselect all items first for this requirement.
+     *
+     * @param adapter    the adapter instance
+     * @param identifier the identifier of the item to select / deselect
+     * @param select     the new selected state of the sub items
+     * @deprecated See {@link SelectExtension#selectByIdentifier(long, boolean, boolean)} ()} ()}
+     */
+    @Deprecated
+    @SuppressWarnings("unchecked")
+    public static boolean selectItem(final FastAdapter adapter, final long identifier, final boolean select) {
+        Triple<Boolean, IItem, Integer> res = adapter.recursive(new AdapterPredicate() {
+            @Override
+            public boolean apply(@NonNull IAdapter lastParentAdapter, int lastParentPosition, @NonNull IItem item, int position) {
+                if (item.getIdentifier() == identifier) {
+                    if (position != -1) {
+                        SelectExtension extension = (SelectExtension) adapter.getExtension(SelectExtension.class);
+                        if (extension != null) {
+                            if (select) {
+                                extension.select(position);
+                            } else {
+                                extension.deselect(position);
+                            }
+                        }
+                    } else {
+                        item.withSetSelected(select);
+                    }
+                    return true;
+                }
+                return false;
+            }
+        }, true);
+        return res.first;
+    }
 
+    /**
+     * deselects all items including all subitems
+     *
+     * @param adapter the adapter instance
+     * @deprecated See {@link SelectExtension#deselect()} ()}
+     */
+    @Deprecated
+    @SuppressWarnings("unchecked")
+    public static void deselect(final FastAdapter adapter) {
+        adapter.recursive(new AdapterPredicate() {
+            @Override
+            public boolean apply(@NonNull IAdapter lastParentAdapter, int lastParentPosition, @NonNull IItem item, int position) {
+                if (position != -1) {
+                    SelectExtension extension = (SelectExtension) adapter.getExtension(SelectExtension.class);
+                    if (extension != null) {
+                        extension.deselect(position);
+                    }
+                } else {
+                    item.withSetSelected(false);
+                }
+                return true;
+            }
+        }, false);
+    }
+
+    private static <T extends IExpandable & IItem> T getParent(IItem item) {
         if (item instanceof ISubItem) {
             return (T) ((ISubItem) item).getParent();
         }
@@ -255,10 +327,12 @@ public class SubItemUtil {
      * deletes all selected items from the adapter respecting if the are sub items or not
      * subitems are removed from their parents sublists, main items are directly removed
      *
+     * Alternatively you might consider also looking at: {@link SelectExtension#deleteAllSelectedItems()}
+     *
      * @param deleteEmptyHeaders if true, empty headers will be removed from the adapter
      * @return List of items that have been removed from the adapter
      */
-    public static List<IItem> deleteSelected(final FastAdapter fastAdapter, boolean notifyParent, boolean deleteEmptyHeaders) {
+    public static List<IItem> deleteSelected(final FastAdapter fastAdapter, final ExpandableExtension expandableExtension, boolean notifyParent, boolean deleteEmptyHeaders) {
         List<IItem> deleted = new ArrayList<>();
 
         // we use a LinkedList, because this has performance advantages when modifying the listIterator during iteration!
@@ -287,7 +361,7 @@ public class SubItemUtil {
 
                 // check if parent is expanded and notify the adapter about the removed item, if necessary (only if parent is visible)
                 if (parentPos != -1 && ((IExpandable) parent).isExpanded()) {
-                    fastAdapter.notifyAdapterSubItemsChanged(parentPos, ((IExpandable) parent).getSubItems().size() + 1);
+                    expandableExtension.notifyAdapterSubItemsChanged(parentPos, ((IExpandable) parent).getSubItems().size() + 1);
                 }
 
                 // if desired, notify the parent about its changed items (only if parent is visible!)
@@ -296,7 +370,7 @@ public class SubItemUtil {
                     fastAdapter.notifyAdapterItemChanged(parentPos);
                     // expand the item again if it was expanded before calling notifyAdapterItemChanged
                     if (expanded) {
-                        fastAdapter.expand(parentPos);
+                        expandableExtension.expand(parentPos);
                     }
                 }
 
@@ -328,13 +402,13 @@ public class SubItemUtil {
      * deletes all items in identifiersToDelete collection from the adapter respecting if there are sub items or not
      * subitems are removed from their parents sublists, main items are directly removed
      *
-     * @param fastAdapter the adapter to remove the items from
+     * @param fastAdapter         the adapter to remove the items from
      * @param identifiersToDelete ids of items to remove
-     * @param notifyParent if true, headers of removed items will be notified about the change of their child items
-     * @param deleteEmptyHeaders if true, empty headers will be removed from the adapter
+     * @param notifyParent        if true, headers of removed items will be notified about the change of their child items
+     * @param deleteEmptyHeaders  if true, empty headers will be removed from the adapter
      * @return List of items that have been removed from the adapter
      */
-    public static List<IItem> delete(final FastAdapter fastAdapter, Collection<Long> identifiersToDelete, boolean notifyParent, boolean deleteEmptyHeaders) {
+    public static List<IItem> delete(final FastAdapter fastAdapter, final ExpandableExtension expandableExtension, Collection<Long> identifiersToDelete, boolean notifyParent, boolean deleteEmptyHeaders) {
         List<IItem> deleted = new ArrayList<>();
         if (identifiersToDelete == null || identifiersToDelete.size() == 0) {
             return deleted;
@@ -366,7 +440,7 @@ public class SubItemUtil {
 
                 // check if parent is expanded and notify the adapter about the removed item, if necessary (only if parent is visible)
                 if (parentPos != -1 && ((IExpandable) parent).isExpanded()) {
-                    fastAdapter.notifyAdapterSubItemsChanged(parentPos, ((IExpandable) parent).getSubItems().size() + 1);
+                    expandableExtension.notifyAdapterSubItemsChanged(parentPos, ((IExpandable) parent).getSubItems().size() + 1);
                 }
 
                 // if desired, notify the parent about it's changed items (only if parent is visible!)
@@ -375,7 +449,7 @@ public class SubItemUtil {
                     fastAdapter.notifyAdapterItemChanged(parentPos);
                     // expand the item again if it was expanded before calling notifyAdapterItemChanged
                     if (expanded) {
-                        fastAdapter.expand(parentPos);
+                        expandableExtension.expand(parentPos);
                     }
                 }
 
@@ -409,27 +483,27 @@ public class SubItemUtil {
     /**
      * notifies items (incl. sub items if they are currently extended)
      *
-     * @param adapter the adapter
+     * @param adapter     the adapter
      * @param identifiers set of identifiers that should be notified
      */
-    public static <Item extends IItem & IExpandable> void notifyItemsChanged(final FastAdapter adapter, Set<Long> identifiers) {
-        notifyItemsChanged(adapter, identifiers, false);
+    public static <Item extends IItem & IExpandable> void notifyItemsChanged(final FastAdapter adapter, ExpandableExtension expandableExtension, Set<Long> identifiers) {
+        notifyItemsChanged(adapter, expandableExtension, identifiers, false);
     }
 
     /**
      * notifies items (incl. sub items if they are currently extended)
      *
-     * @param adapter the adapter
-     * @param identifiers set of identifiers that should be notified
+     * @param adapter              the adapter
+     * @param identifiers          set of identifiers that should be notified
      * @param restoreExpandedState true, if expanded headers should stay expanded
      */
-    public static <Item extends IItem & IExpandable> void notifyItemsChanged(final FastAdapter adapter, Set<Long> identifiers, boolean restoreExpandedState) {
+    public static <Item extends IItem & IExpandable> void notifyItemsChanged(final FastAdapter adapter, ExpandableExtension expandableExtension, Set<Long> identifiers, boolean restoreExpandedState) {
         int i;
         IItem item;
         for (i = 0; i < adapter.getItemCount(); i++) {
             item = adapter.getItem(i);
             if (item instanceof IExpandable) {
-                notifyItemsChanged(adapter, (Item) item, identifiers, true, restoreExpandedState);
+                notifyItemsChanged(adapter, expandableExtension, (Item) item, identifiers, true, restoreExpandedState);
             } else if (identifiers.contains(item.getIdentifier())) {
                 adapter.notifyAdapterItemChanged(i);
             }
@@ -439,13 +513,13 @@ public class SubItemUtil {
     /**
      * notifies items (incl. sub items if they are currently extended)
      *
-     * @param adapter the adapter
-     * @param header the expandable header that should be checked (incl. sub items)
-     * @param identifiers set of identifiers that should be notified
-     * @param checkSubItems true, if sub items of headers items should be checked recursively
+     * @param adapter              the adapter
+     * @param header               the expandable header that should be checked (incl. sub items)
+     * @param identifiers          set of identifiers that should be notified
+     * @param checkSubItems        true, if sub items of headers items should be checked recursively
      * @param restoreExpandedState true, if expanded headers should stay expanded
      */
-    public static <Item extends IItem & IExpandable> void notifyItemsChanged(final FastAdapter adapter, Item header, Set<Long> identifiers, boolean checkSubItems, boolean restoreExpandedState) {
+    public static <Item extends IItem & IExpandable> void notifyItemsChanged(final FastAdapter adapter, final ExpandableExtension expandableExtension, Item header, Set<Long> identifiers, boolean checkSubItems, boolean restoreExpandedState) {
         int subItems = header.getSubItems().size();
         int position = adapter.getPosition(header);
         boolean expanded = header.isExpanded();
@@ -457,18 +531,18 @@ public class SubItemUtil {
         IItem item;
         if (header.isExpanded()) {
             for (int i = 0; i < subItems; i++) {
-                item = (IItem)header.getSubItems().get(i);
+                item = (IItem) header.getSubItems().get(i);
                 if (identifiers.contains(item.getIdentifier())) {
 //                    Log.d("NOTIFY", "Position=" + position + ", i=" + i);
                     adapter.notifyAdapterItemChanged(position + i + 1);
                 }
                 if (checkSubItems && item instanceof IExpandable) {
-                    notifyItemsChanged(adapter, (Item)item, identifiers, true, restoreExpandedState);
+                    notifyItemsChanged(adapter, expandableExtension, (Item) item, identifiers, true, restoreExpandedState);
                 }
             }
         }
         if (restoreExpandedState && expanded) {
-            adapter.expand(position);
+            expandableExtension.expand(position);
         }
     }
 

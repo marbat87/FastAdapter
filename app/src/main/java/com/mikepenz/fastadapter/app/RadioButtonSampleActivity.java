@@ -1,6 +1,7 @@
 package com.mikepenz.fastadapter.app;
 
 import android.os.Bundle;
+import android.support.annotation.NonNull;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.DefaultItemAnimator;
 import android.support.v7.widget.LinearLayoutManager;
@@ -10,11 +11,10 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.Toast;
 
-import com.mikepenz.fastadapter.FastAdapter;
 import com.mikepenz.fastadapter.IAdapter;
-import com.mikepenz.fastadapter.commons.adapters.FastItemAdapter;
 import com.mikepenz.fastadapter.app.items.RadioButtonSampleItem;
-import com.mikepenz.fastadapter.helpers.ClickListenerHelper;
+import com.mikepenz.fastadapter.commons.adapters.FastItemAdapter;
+import com.mikepenz.fastadapter.listeners.OnClickListener;
 import com.mikepenz.materialize.MaterializeBuilder;
 
 import java.util.ArrayList;
@@ -26,8 +26,6 @@ public class RadioButtonSampleActivity extends AppCompatActivity {
 
     //save our FastAdapter
     private FastItemAdapter<RadioButtonSampleItem> fastItemAdapter;
-
-    private ClickListenerHelper<RadioButtonSampleItem> mClickListenerHelper;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -48,26 +46,23 @@ public class RadioButtonSampleActivity extends AppCompatActivity {
         fastItemAdapter.withSelectable(true);
 
         //configure our fastAdapter
-        fastItemAdapter.withOnClickListener(new FastAdapter.OnClickListener<RadioButtonSampleItem>() {
+        fastItemAdapter.withOnClickListener(new OnClickListener<RadioButtonSampleItem>() {
             @Override
-            public boolean onClick(View v, IAdapter<RadioButtonSampleItem> adapter, RadioButtonSampleItem item, int position) {
+            public boolean onClick(View v, IAdapter<RadioButtonSampleItem> adapter, @NonNull RadioButtonSampleItem item, int position) {
                 Toast.makeText(v.getContext(), (item).name.getText(v.getContext()), Toast.LENGTH_LONG).show();
                 return false;
             }
         });
 
-        //init the ClickListenerHelper which simplifies custom click listeners on views of the Adapter
-        mClickListenerHelper = new ClickListenerHelper<>(fastItemAdapter);
-
-        fastItemAdapter.withOnPreClickListener(new FastAdapter.OnClickListener<RadioButtonSampleItem>() {
+        fastItemAdapter.withOnPreClickListener(new OnClickListener<RadioButtonSampleItem>() {
             @Override
-            public boolean onClick(View v, IAdapter<RadioButtonSampleItem> adapter, RadioButtonSampleItem item, int position) {
+            public boolean onClick(View v, IAdapter<RadioButtonSampleItem> adapter, @NonNull RadioButtonSampleItem item, int position) {
                 // consume otherwise radio/checkbox will be deselected
                 return true;
             }
         });
 
-        fastItemAdapter.withItemEvent(new RadioButtonSampleItem.RadioButtonClickEvent());
+        fastItemAdapter.withEventHook(new RadioButtonSampleItem.RadioButtonClickEvent());
 
         //get our recyclerView and do basic setup
         RecyclerView recyclerView = (RecyclerView) findViewById(R.id.rv);
@@ -97,7 +92,7 @@ public class RadioButtonSampleActivity extends AppCompatActivity {
 
     @Override
     protected void onSaveInstanceState(Bundle outState) {
-        //add the values which need to be saved from the adapter to the bundel
+        //add the values which need to be saved from the adapter to the bundle
         outState = fastItemAdapter.saveInstanceState(outState);
         super.onSaveInstanceState(outState);
     }

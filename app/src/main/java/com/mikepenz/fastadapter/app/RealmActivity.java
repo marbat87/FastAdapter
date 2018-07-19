@@ -2,6 +2,7 @@ package com.mikepenz.fastadapter.app;
 
 import android.graphics.Color;
 import android.os.Bundle;
+import android.support.annotation.NonNull;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
@@ -12,10 +13,10 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.Toast;
 
-import com.mikepenz.fastadapter.FastAdapter;
 import com.mikepenz.fastadapter.IAdapter;
-import com.mikepenz.fastadapter.commons.adapters.FastItemAdapter;
 import com.mikepenz.fastadapter.app.items.RealmSampleUserItem;
+import com.mikepenz.fastadapter.commons.adapters.FastItemAdapter;
+import com.mikepenz.fastadapter.listeners.OnClickListener;
 import com.mikepenz.iconics.IconicsDrawable;
 import com.mikepenz.itemanimators.AlphaInAnimator;
 import com.mikepenz.material_design_iconic_typeface_library.MaterialDesignIconic;
@@ -52,9 +53,9 @@ public class RealmActivity extends AppCompatActivity {
         mFastItemAdapter = new FastItemAdapter<>();
 
         //configure our fastAdapter
-        mFastItemAdapter.withOnClickListener(new FastAdapter.OnClickListener<RealmSampleUserItem>() {
+        mFastItemAdapter.withOnClickListener(new OnClickListener<RealmSampleUserItem>() {
             @Override
-            public boolean onClick(View v, IAdapter<RealmSampleUserItem> adapter, RealmSampleUserItem item, int position) {
+            public boolean onClick(View v, IAdapter<RealmSampleUserItem> adapter, @NonNull RealmSampleUserItem item, int position) {
                 Toast.makeText(v.getContext(), item.getName(), Toast.LENGTH_SHORT).show();
                 return false;
             }
@@ -119,7 +120,7 @@ public class RealmActivity extends AppCompatActivity {
 
     @Override
     protected void onSaveInstanceState(Bundle outState) {
-        //add the values which need to be saved from the adapter to the bundel
+        //add the values which need to be saved from the adapter to the bundle
         outState = mFastItemAdapter.saveInstanceState(outState);
         super.onSaveInstanceState(outState);
     }

@@ -1,6 +1,7 @@
 package com.mikepenz.fastadapter.app;
 
 import android.os.Bundle;
+import android.support.annotation.NonNull;
 import android.support.v4.view.LayoutInflaterCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.view.ActionMode;
@@ -14,14 +15,17 @@ import android.view.View;
 
 import com.mikepenz.fastadapter.FastAdapter;
 import com.mikepenz.fastadapter.IAdapter;
+import com.mikepenz.fastadapter.IAdapterExtension;
 import com.mikepenz.fastadapter.IExpandable;
 import com.mikepenz.fastadapter.IItem;
-import com.mikepenz.fastadapter.adapters.HeaderAdapter;
 import com.mikepenz.fastadapter.adapters.ItemAdapter;
 import com.mikepenz.fastadapter.app.adapters.StickyHeaderAdapter;
 import com.mikepenz.fastadapter.app.items.SimpleItem;
 import com.mikepenz.fastadapter.app.items.expandable.SimpleSubExpandableItem;
 import com.mikepenz.fastadapter.app.items.expandable.SimpleSubItem;
+import com.mikepenz.fastadapter.expandable.ExpandableExtension;
+import com.mikepenz.fastadapter.listeners.OnClickListener;
+import com.mikepenz.fastadapter.listeners.OnLongClickListener;
 import com.mikepenz.fastadapter_extensions.ActionModeHelper;
 import com.mikepenz.iconics.context.IconicsLayoutInflater;
 import com.mikepenz.materialize.MaterializeBuilder;
@@ -29,9 +33,12 @@ import com.mikepenz.materialize.util.UIUtils;
 import com.timehop.stickyheadersrecyclerview.StickyRecyclerHeadersDecoration;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Random;
+import java.util.concurrent.atomic.AtomicInteger;
+
+import static com.mikepenz.fastadapter.adapters.ItemAdapter.items;
 
 /**
  * This sample showcases compatibility the awesome Sticky-Headers library by timehop
@@ -42,10 +49,11 @@ public class AdvancedSampleActivity extends AppCompatActivity {
 
     //save our FastAdapter
     private FastAdapter<IItem> mFastAdapter;
-    private HeaderAdapter<SimpleItem> mHeaderAdapter;
+    private ItemAdapter<SimpleItem> mHeaderAdapter;
     private ItemAdapter<IItem> mItemAdapter;
+    private ExpandableExtension<IItem> mExpandableExtension;
 
-    private ActionModeHelper mActionModeHelper;
+    private ActionModeHelper<IItem> mActionModeHelper;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -64,34 +72,32 @@ public class AdvancedSampleActivity extends AppCompatActivity {
         //style our ui
         new MaterializeBuilder().withActivity(this).build();
 
-        //create our FastAdapter
-        mFastAdapter = new FastAdapter<>();
-
-        //we init our ActionModeHelper
-        mActionModeHelper = new ActionModeHelper(mFastAdapter, R.menu.cab, new ActionBarCallBack());
-        mActionModeHelper.withSupportSubItems(true);
-
         //create our adapters
-        final StickyHeaderAdapter stickyHeaderAdapter = new StickyHeaderAdapter();
-        mItemAdapter = new ItemAdapter<>();
-        mHeaderAdapter = new HeaderAdapter<>();
+        mHeaderAdapter = items();
+        mItemAdapter = items();
+        StickyHeaderAdapter<IItem> stickyHeaderAdapter = new StickyHeaderAdapter<>();
+
+        //we also want the expandable feature
+        mExpandableExtension = new ExpandableExtension<>();
+
+        //create our FastAdapter
+        mFastAdapter = FastAdapter.with(Arrays.asList(mHeaderAdapter, mItemAdapter), Arrays.<IAdapterExtension<IItem>>asList(mExpandableExtension));
 
         //configure our mFastAdapter
         //as we provide id's for the items we want the hasStableIds enabled to speed up things
         mFastAdapter.withSelectable(true);
         mFastAdapter.withMultiSelect(true);
         mFastAdapter.withSelectOnLongClick(true);
-        mFastAdapter.withPositionBasedStateManagement(false);
-        mFastAdapter.withOnPreClickListener(new FastAdapter.OnClickListener<IItem>() {
+        mFastAdapter.withOnPreClickListener(new OnClickListener<IItem>() {
             @Override
-            public boolean onClick(View v, IAdapter adapter, IItem item, int position) {
+            public boolean onClick(View v, IAdapter adapter, @NonNull IItem item, int position) {
                 //we handle the default onClick behavior for the actionMode. This will return null if it didn't do anything and you can handle a normal onClick
                 Boolean res = mActionModeHelper.onClick(item);
                 return res != null ? res : false;
             }
         });
 
-        mFastAdapter.withOnPreLongClickListener(new FastAdapter.OnLongClickListener<IItem>() {
+        mFastAdapter.withOnPreLongClickListener(new OnLongClickListener<IItem>() {
             @Override
             public boolean onLongClick(View v, IAdapter adapter, IItem item, int position) {
                 //we do not want expandable items to be selected
@@ -112,18 +118,20 @@ public class AdvancedSampleActivity extends AppCompatActivity {
             }
         });
 
+        //we init our ActionModeHelper
+        mActionModeHelper = new ActionModeHelper<>(mFastAdapter, R.menu.cab, new ActionBarCallBack());
+
         //get our recyclerView and do basic setup
         RecyclerView rv = (RecyclerView) findViewById(R.id.rv);
         rv.setLayoutManager(new LinearLayoutManager(this));
         rv.setItemAnimator(new DefaultItemAnimator());
-        rv.setAdapter(stickyHeaderAdapter.wrap(mItemAdapter.wrap(mHeaderAdapter.wrap(mFastAdapter))));
+        rv.setAdapter(stickyHeaderAdapter.wrap(mFastAdapter));
 
         final StickyRecyclerHeadersDecoration decoration = new StickyRecyclerHeadersDecoration(stickyHeaderAdapter);
         rv.addItemDecoration(decoration);
 
-
         //so the headers are aware of changes
-        stickyHeaderAdapter.registerAdapterDataObserver(new RecyclerView.AdapterDataObserver() {
+        mFastAdapter.registerAdapterDataObserver(new RecyclerView.AdapterDataObserver() {
             @Override
             public void onChanged() {
                 decoration.invalidateHeaders();
@@ -150,27 +158,28 @@ public class AdvancedSampleActivity extends AppCompatActivity {
                 .withIdentifier(1);
         mHeaderAdapter.add(sampleItem);
         //fill with some sample data
+        AtomicInteger id = new AtomicInteger(1);
         List<IItem> items = new ArrayList<>();
-        int size = new Random().nextInt(25) + 10;
+        int size = 25;
         for (int i = 1; i <= size; i++) {
             if (i % 6 == 0) {
                 SimpleSubExpandableItem<SimpleSubExpandableItem, SimpleSubExpandableItem> expandableItem = new SimpleSubExpandableItem<>();
-                expandableItem.withName("Test " + i)
+                expandableItem.withName("Test " + id.get())
                         .withHeader(headers[i / 5])
-                        .withIdentifier(100 + i);
+                        .withIdentifier(id.getAndIncrement());
                 List<SimpleSubExpandableItem> subItems = new LinkedList<>();
                 for (int ii = 1; ii <= 3; ii++) {
                     SimpleSubExpandableItem<SimpleSubExpandableItem, SimpleSubItem> subItem = new SimpleSubExpandableItem<>();
-                    subItem.withName("-- SubTest " + ii)
+                    subItem.withName("-- SubTest " + id.get())
                             .withHeader(headers[i / 5])
-                            .withIdentifier(1000 + ii);
+                            .withIdentifier(id.getAndIncrement());
 
                     List<SimpleSubItem> subSubItems = new LinkedList<>();
                     for (int iii = 1; iii <= 3; iii++) {
                         SimpleSubItem subSubItem = new SimpleSubItem();
-                        subSubItem.withName("---- SubSubTest " + iii)
+                        subSubItem.withName("---- SubSubTest " + id.get())
                                 .withHeader(headers[i / 5])
-                                .withIdentifier(10000 + iii);
+                                .withIdentifier(id.getAndIncrement());
                         subSubItems.add(subSubItem);
                     }
                     subItem.withSubItems(subSubItems);
@@ -180,7 +189,7 @@ public class AdvancedSampleActivity extends AppCompatActivity {
                 expandableItem.withSubItems(subItems);
                 items.add(expandableItem);
             } else {
-                items.add(new SimpleSubItem().withName("Test " + i).withHeader(headers[i / 5]).withIdentifier(i));
+                items.add(new SimpleSubItem().withName("Test " + id.get()).withHeader(headers[i / 5]).withIdentifier(id.getAndIncrement()));
             }
         }
         mItemAdapter.set(items);
@@ -188,7 +197,7 @@ public class AdvancedSampleActivity extends AppCompatActivity {
 
     @Override
     protected void onSaveInstanceState(Bundle outState) {
-        //add the values which need to be saved from the adapter to the bundel
+        //add the values which need to be saved from the adapter to the bundle
         outState = mFastAdapter.saveInstanceState(outState);
         super.onSaveInstanceState(outState);
     }

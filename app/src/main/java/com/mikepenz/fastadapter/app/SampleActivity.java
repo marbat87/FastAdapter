@@ -21,6 +21,7 @@ import com.mikepenz.fastadapter.FastAdapter;
 import com.mikepenz.fastadapter.adapters.ItemAdapter;
 import com.mikepenz.fastadapter.app.dummy.ImageDummyData;
 import com.mikepenz.fastadapter.app.items.SimpleImageItem;
+import com.mikepenz.fastadapter.select.SelectExtension;
 import com.mikepenz.iconics.IconicsDrawable;
 import com.mikepenz.itemanimators.SlideDownAlphaAnimator;
 import com.mikepenz.material_design_iconic_typeface_library.MaterialDesignIconic;
@@ -30,6 +31,7 @@ import com.mikepenz.materialdrawer.model.DividerDrawerItem;
 import com.mikepenz.materialdrawer.model.PrimaryDrawerItem;
 import com.mikepenz.materialdrawer.model.interfaces.IDrawerItem;
 
+import java.util.Arrays;
 import java.util.List;
 
 public class SampleActivity extends AppCompatActivity {
@@ -42,6 +44,8 @@ public class SampleActivity extends AppCompatActivity {
     private FastAdapter<SimpleImageItem> mFastAdapter;
     //save our FastAdapter
     private ItemAdapter<SimpleImageItem> mItemAdapter;
+    //our `SelectExtension`
+    private SelectExtension<SimpleImageItem> selectExtension;
 
     @Override
     protected void onCreate(final Bundle savedInstanceState) {
@@ -71,8 +75,8 @@ public class SampleActivity extends AppCompatActivity {
                         new PrimaryDrawerItem().withName(R.string.sample_collapsible).withDescription(R.string.sample_collapsible_descr).withSelectable(false).withIdentifier(2).withIcon(MaterialDesignIconic.Icon.gmi_check_all),
                         new PrimaryDrawerItem().withName(R.string.sample_sticky_header).withDescription(R.string.sample_sticky_header_descr).withSelectable(false).withIdentifier(3).withIcon(MaterialDesignIconic.Icon.gmi_format_align_left),
                         new PrimaryDrawerItem().withName(R.string.sample_advanced).withDescription(R.string.sample_advanced_descr).withSelectable(false).withIdentifier(4).withIcon(MaterialDesignIconic.Icon.gmi_coffee),
-                        new PrimaryDrawerItem().withName(R.string.sample_generic_item).withDescription(R.string.sample_generic_item_descr).withSelectable(false).withIdentifier(7).withIcon(MaterialDesignIconic.Icon.gmi_font),
-                        new PrimaryDrawerItem().withName(R.string.sample_multi_generic_item).withDescription(R.string.sample_multi_generic_item_descr).withSelectable(false).withIdentifier(9).withIcon(MaterialDesignIconic.Icon.gmi_format_list_numbered),
+                        new PrimaryDrawerItem().withName(R.string.sample_model_item).withDescription(R.string.sample_model_item_descr).withSelectable(false).withIdentifier(7).withIcon(MaterialDesignIconic.Icon.gmi_font),
+                        new PrimaryDrawerItem().withName(R.string.sample_multi_model_item).withDescription(R.string.sample_multi_model_item_descr).withSelectable(false).withIdentifier(9).withIcon(MaterialDesignIconic.Icon.gmi_format_list_numbered),
                         new PrimaryDrawerItem().withName(R.string.sample_checkbox_item).withDescription(R.string.sample_checkbox_item_descr).withSelectable(false).withIdentifier(10).withIcon(CommunityMaterial.Icon.cmd_checkbox_marked),
                         new PrimaryDrawerItem().withName(R.string.sample_radiobutton_item).withDescription(R.string.sample_radiobutton_item_descr).withSelectable(false).withIdentifier(11).withIcon(CommunityMaterial.Icon.cmd_radiobox_marked),
                         new PrimaryDrawerItem().withName(R.string.sample_swipe_list).withDescription(R.string.sample_swipe_list_descr).withSelectable(false).withIdentifier(12).withIcon(MaterialDesignIconic.Icon.gmi_format_align_left),
@@ -81,6 +85,8 @@ public class SampleActivity extends AppCompatActivity {
                         new PrimaryDrawerItem().withName(R.string.sample_mopub).withDescription(R.string.sample_mopub_descr).withSelectable(false).withIdentifier(15).withIcon(MaterialDesignIconic.Icon.gmi_accounts_list),
                         new PrimaryDrawerItem().withName(R.string.sample_realm_list).withDescription(R.string.sample_realm_list_descr).withSelectable(false).withIdentifier(16).withIcon(MaterialDesignIconic.Icon.gmi_format_color_text),
                         new PrimaryDrawerItem().withName(R.string.sample_collapsible_multi_select_delete).withDescription(R.string.sample_collapsible_multi_select_delete_descr).withSelectable(false).withIdentifier(17).withIcon(MaterialDesignIconic.Icon.gmi_check_all),
+                        new PrimaryDrawerItem().withName(R.string.sample_sticky_header_mopub).withDescription(R.string.sample_sticky_header_mopub_descr).withSelectable(false).withIdentifier(18).withIcon(MaterialDesignIconic.Icon.gmi_accounts_list),
+                        new PrimaryDrawerItem().withName(R.string.sample_diff_util).withDescription(R.string.sample_diff_util_descr).withSelectable(false).withIdentifier(19).withIcon(MaterialDesignIconic.Icon.gmi_refresh),
                         new DividerDrawerItem(),
                         new PrimaryDrawerItem().withName(R.string.open_source).withSelectable(false).withIdentifier(100).withIcon(MaterialDesignIconic.Icon.gmi_github)
                 )
@@ -102,11 +108,11 @@ public class SampleActivity extends AppCompatActivity {
                             } else if (drawerItem.getIdentifier() == 6) {
                                 intent = new Intent(SampleActivity.this, SimpleItemListActivity.class);
                             } else if (drawerItem.getIdentifier() == 7) {
-                                intent = new Intent(SampleActivity.this, GenericItemActivity.class);
+                                intent = new Intent(SampleActivity.this, ModelItemActivity.class);
                             } else if (drawerItem.getIdentifier() == 8) {
                                 intent = new Intent(SampleActivity.this, IconGridActivity.class);
                             } else if (drawerItem.getIdentifier() == 9) {
-                                intent = new Intent(SampleActivity.this, MultiTypeGenericItemActivity.class);
+                                intent = new Intent(SampleActivity.this, MultiTypeModelItemActivity.class);
                             } else if (drawerItem.getIdentifier() == 10) {
                                 intent = new Intent(SampleActivity.this, CheckBoxSampleActivity.class);
                             } else if (drawerItem.getIdentifier() == 11) {
@@ -123,6 +129,10 @@ public class SampleActivity extends AppCompatActivity {
                                 intent = new Intent(SampleActivity.this, RealmActivity.class);
                             } else if (drawerItem.getIdentifier() == 17) {
                                 intent = new Intent(SampleActivity.this, ExpandableMultiselectDeleteSampleActivity.class);
+                            } else if (drawerItem.getIdentifier() == 18) {
+                                intent = new Intent(SampleActivity.this, StickyHeaderMopubAdsActivity.class);
+                            } else if (drawerItem.getIdentifier() == 19) {
+                                intent = new Intent(SampleActivity.this, DiffUtilActivity.class);
                             } else if (drawerItem.getIdentifier() == 100) {
                                 intent = new LibsBuilder()
                                         .withFields(R.string.class.getFields())
@@ -143,20 +153,22 @@ public class SampleActivity extends AppCompatActivity {
                 .withSelectedItemByPosition(-1)
                 .build();
 
-        //create our FastAdapter which will manage everything
-        mFastAdapter = new FastAdapter<>();
-        mFastAdapter.withSelectable(true);
-        mFastAdapter.withMultiSelect(true);
-        mFastAdapter.withSelectOnLongClick(false);
         //create our ItemAdapter which will host our items
         mItemAdapter = new ItemAdapter<>();
 
+        //create our FastAdapter which will manage everything
+        mFastAdapter = FastAdapter.with(Arrays.asList(mItemAdapter));
+        mFastAdapter.withSelectable(true);
+        mFastAdapter.withMultiSelect(true);
+        mFastAdapter.withSelectOnLongClick(false);
+        selectExtension = mFastAdapter.getExtension(SelectExtension.class);
+
         //configure our fastAdapter
         //get our recyclerView and do basic setup
-        mRecyclerView = (RecyclerView) findViewById(R.id.rv);
+        mRecyclerView = findViewById(R.id.rv);
         //mRecyclerView.setLayoutManager(new GridLayoutManager(this, 3));
         mRecyclerView.setLayoutManager(new LinearLayoutManager(this));
-        mRecyclerView.setAdapter(mItemAdapter.wrap(mFastAdapter));
+        mRecyclerView.setAdapter(mFastAdapter);
         mRecyclerView.setItemAnimator(new SlideDownAlphaAnimator());
         mRecyclerView.getItemAnimator().setAddDuration(500);
         mRecyclerView.getItemAnimator().setRemoveDuration(500);
@@ -201,8 +213,8 @@ public class SampleActivity extends AppCompatActivity {
                 mItemAdapter.add(firstVisiblePosition + 1, ImageDummyData.getDummyItem());
                 return true;
             case R.id.item_change:
-                for (Integer pos : mFastAdapter.getSelections()) {
-                    SimpleImageItem i = mItemAdapter.getItem(pos);
+                for (Integer pos : selectExtension.getSelections()) {
+                    SimpleImageItem i = mItemAdapter.getAdapterItem(pos);
                     i.withName("CHANGED");
                     i.withDescription("This item was modified");
                     mItemAdapter.set(pos, i);
@@ -215,7 +227,7 @@ public class SampleActivity extends AppCompatActivity {
                 }
                 return true;
             case R.id.item_delete:
-                mFastAdapter.deleteAllSelectedItems();
+                selectExtension.deleteAllSelectedItems();
                 return true;
             case android.R.id.home:
                 onBackPressed();
@@ -229,7 +241,7 @@ public class SampleActivity extends AppCompatActivity {
     protected void onSaveInstanceState(Bundle outState) {
         //add the values which need to be saved from the drawer to the bundle
         outState = mResult.saveInstanceState(outState);
-        //add the values which need to be saved from the adapter to the bundel
+        //add the values which need to be saved from the adapter to the bundle
         outState = mFastAdapter.saveInstanceState(outState);
         super.onSaveInstanceState(outState);
     }

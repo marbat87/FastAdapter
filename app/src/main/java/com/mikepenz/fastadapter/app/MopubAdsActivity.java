@@ -1,6 +1,7 @@
 package com.mikepenz.fastadapter.app;
 
 import android.os.Bundle;
+import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.GridLayoutManager;
@@ -10,10 +11,10 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.Toast;
 
-import com.mikepenz.fastadapter.FastAdapter;
 import com.mikepenz.fastadapter.IAdapter;
 import com.mikepenz.fastadapter.app.adapters.MopubFastItemAdapter;
 import com.mikepenz.fastadapter.app.items.LetterItem;
+import com.mikepenz.fastadapter.listeners.OnClickListener;
 import com.mopub.nativeads.MoPubRecyclerAdapter;
 import com.mopub.nativeads.MoPubStaticNativeAdRenderer;
 import com.mopub.nativeads.ViewBinder;
@@ -21,7 +22,7 @@ import com.mopub.nativeads.ViewBinder;
 import butterknife.BindView;
 import butterknife.ButterKnife;
 
-public class MopubAdsActivity extends AppCompatActivity implements FastAdapter.OnClickListener<LetterItem> {
+public class MopubAdsActivity extends AppCompatActivity implements OnClickListener<LetterItem> {
 
     private MopubFastItemAdapter<LetterItem> mAdapter;
 
@@ -78,7 +79,7 @@ public class MopubAdsActivity extends AppCompatActivity implements FastAdapter.O
     }
 
     @Override
-    public boolean onClick(View v, IAdapter<LetterItem> adapter, LetterItem item, int position) {
+    public boolean onClick(View v, IAdapter<LetterItem> adapter, @NonNull LetterItem item, int position) {
         Toast.makeText(this, "Item pressed " + item.letter + " at position " + position, Toast.LENGTH_SHORT).show();
         return false;
     }

@@ -1,14 +1,18 @@
 apply plugin: 'com.android.library'
 
 android {
-    compileSdkVersion rootProject.ext.compileSdkVersion
-    buildToolsVersion rootProject.ext.buildToolsVersion
+    compileSdkVersion setup.compileSdk
+    buildToolsVersion setup.buildTools
 
     defaultConfig {
-        minSdkVersion 14
-        targetSdkVersion 25
-        versionCode 251
-        versionName '2.5.1'
+        minSdkVersion setup.minSdk
+        targetSdkVersion setup.targetSdk
+        versionCode release.versionCode
+        versionName release.versionName
+
+        consumerProguardFiles 'consumer-proguard-rules.pro'
+
+        resValue "string", "fastadapter_lib_version", "${versionName}"
     }
     buildTypes {
         release {
@@ -23,14 +27,13 @@ android {
     }
 }
 
-if (project.hasProperty('pushall') || project.hasProperty('librarycoreonly')) {
-    apply from: '../gradle-mvn-push.gradle'
-    apply plugin: 'com.novoda.bintray-release'
-    apply from: '../gradle-jcenter-push.gradle'
+dependencies {
+    implementation  "com.android.support:appcompat-v7:${versions.supportLib}"
+    implementation  "com.android.support:recyclerview-v7:${versions.supportLib}"
+    implementation  "com.android.support:support-annotations:${versions.supportLib}"
+    compileOnly "com.google.code.findbugs:jsr305:3.0.2"
 }
 
-dependencies {
-    compile "com.android.support:appcompat-v7:${rootProject.ext.supportLibVersion}"
-    compile "com.android.support:recyclerview-v7:${rootProject.ext.supportLibVersion}"
-    compile "com.android.support:support-annotations:${rootProject.ext.supportLibVersion}"
+if (project.hasProperty('pushall') || project.hasProperty('librarycoreonly')) {
+    apply from: '../gradle-release.gradle'
 }

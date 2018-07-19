@@ -1,14 +1,14 @@
 apply plugin: 'com.android.library'
 
 android {
-    compileSdkVersion rootProject.ext.compileSdkVersion
-    buildToolsVersion rootProject.ext.buildToolsVersion
+    compileSdkVersion setup.compileSdk
+    buildToolsVersion setup.buildTools
 
     defaultConfig {
-        minSdkVersion 14
-        targetSdkVersion 25
-        versionCode 250
-        versionName '2.5.0'
+        minSdkVersion setup.minSdk
+        targetSdkVersion setup.targetSdk
+        versionCode release.versionCode
+        versionName release.versionName
     }
     buildTypes {
         release {
@@ -23,32 +23,30 @@ android {
     }
 }
 
-if (project.hasProperty('pushall') || project.hasProperty('librarycommonsonly')) {
-    apply from: '../gradle-mvn-push.gradle'
-    apply plugin: 'com.novoda.bintray-release'
-    apply from: '../gradle-jcenter-push.gradle'
-}
-
 dependencies {
-    compile project(':library-core')
+    implementation project(':library-core')
 
-    compile "com.android.support:appcompat-v7:${rootProject.ext.supportLibVersion}"
-    compile "com.android.support:recyclerview-v7:${rootProject.ext.supportLibVersion}"
-    compile "com.android.support:support-annotations:${rootProject.ext.supportLibVersion}"
+    implementation "com.android.support:appcompat-v7:${versions.supportLib}"
+    implementation "com.android.support:recyclerview-v7:${versions.supportLib}"
+    implementation "com.android.support:support-annotations:${versions.supportLib}"
 
-    testCompile 'junit:junit:4.12'
-    testCompile 'org.mockito:mockito-all:1.10.19'
-    testCompile 'org.robolectric:robolectric:3.1.1'
-    testCompile 'org.robolectric:robolectric-utils:3.1.1'
-    testCompile 'org.robolectric:shadows-core:3.1.1'
-    testCompile 'org.robolectric:shadows-support-v4:3.1.1'
-    testCompile 'com.squareup.assertj:assertj-android:1.1.1'
-    testCompile 'com.squareup.assertj:assertj-android-design:1.1.1@aar'
-    testCompile 'com.squareup.assertj:assertj-android-appcompat-v7:1.1.1@aar'
-    testCompile("com.squareup.assertj:assertj-android-support-v4:1.1.1@aar") {
+    testImplementation 'junit:junit:4.12'
+    testImplementation 'org.mockito:mockito-all:1.10.19'
+    testImplementation 'org.robolectric:robolectric:3.1.1'
+    testImplementation 'org.robolectric:robolectric-utils:3.1.1'
+    testImplementation 'org.robolectric:shadows-core:3.1.1'
+    testImplementation 'org.robolectric:shadows-support-v4:3.1.1'
+    testImplementation 'com.squareup.assertj:assertj-android:1.1.1'
+    testImplementation 'com.squareup.assertj:assertj-android-design:1.1.1@aar'
+    testImplementation 'com.squareup.assertj:assertj-android-appcompat-v7:1.1.1@aar'
+    testImplementation("com.squareup.assertj:assertj-android-support-v4:1.1.1@aar") {
         exclude group: "com.android.support", module: "support-annotations"
         exclude group: "com.android.support", module: "support-v4"
     }
+}
+
+if (project.hasProperty('pushall') || project.hasProperty('librarycommonsonly')) {
+    apply from: '../gradle-release.gradle'
 }
 
 tasks.withType(Test) {

@@ -7,8 +7,9 @@ import android.support.v7.widget.helper.ItemTouchHelper;
 import android.view.View;
 import android.widget.TextView;
 
+import com.mikepenz.fastadapter_extensions.drag.IDraggable;
 import com.mikepenz.fastadapter.IItem;
-import com.mikepenz.fastadapter.ISwipeable;
+import com.mikepenz.fastadapter_extensions.swipe.ISwipeable;
 import com.mikepenz.fastadapter.app.R;
 import com.mikepenz.fastadapter.items.AbstractItem;
 import com.mikepenz.materialdrawer.holder.StringHolder;
@@ -21,7 +22,7 @@ import butterknife.ButterKnife;
 /**
  * Created by Mattias on 2016-02-15.
  */
-public class SwipeableItem extends AbstractItem<SwipeableItem, SwipeableItem.ViewHolder> implements ISwipeable<SwipeableItem, IItem> {
+public class SwipeableItem extends AbstractItem<SwipeableItem, SwipeableItem.ViewHolder> implements ISwipeable<SwipeableItem, IItem>, IDraggable<SwipeableItem, IItem> {
 
     public StringHolder name;
     public StringHolder description;
@@ -34,6 +35,7 @@ public class SwipeableItem extends AbstractItem<SwipeableItem, SwipeableItem.Vie
     public int swipedDirection;
     private Runnable swipedAction;
     public boolean swipeable = true;
+    public boolean draggable = true;
 
     public SwipeableItem withName(String Name) {
         this.name = new StringHolder(Name);
@@ -63,6 +65,17 @@ public class SwipeableItem extends AbstractItem<SwipeableItem, SwipeableItem.Vie
     @Override
     public SwipeableItem withIsSwipeable(boolean swipeable) {
         this.swipeable = swipeable;
+        return this;
+    }
+
+    @Override
+    public boolean isDraggable() {
+        return draggable;
+    }
+
+    @Override
+    public SwipeableItem withIsDraggable(boolean draggable) {
+        this.draggable = draggable;
         return this;
     }
 
